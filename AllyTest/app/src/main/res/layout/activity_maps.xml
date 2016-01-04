@@ -54,6 +54,10 @@
         android:layout_height="match_parent"
         android:background="@android:color/transparent"
         android:clipToPadding="false"
+        android:paddingEnd="@dimen/horizontal_padding"
+        android:paddingLeft="@dimen/horizontal_padding"
+        android:paddingRight="@dimen/horizontal_padding"
+        android:paddingStart="@dimen/horizontal_padding"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
 </android.support.design.widget.CoordinatorLayout>

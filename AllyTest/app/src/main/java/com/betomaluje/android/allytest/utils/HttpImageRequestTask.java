@@ -14,6 +14,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
+ * A class that downloads the SVG image from the Network and stores it on a file. Also it uses ImageCacheUtil to store it in cache
+ * <p/>
  * Created by betomaluje on 1/2/16.
  */
 public class HttpImageRequestTask extends AsyncTask<String, Void, Drawable> {

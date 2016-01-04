@@ -1,12 +1,12 @@
 package com.betomaluje.android.allytest.adapters;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.betomaluje.android.allytest.R;
@@ -16,12 +16,16 @@ import com.betomaluje.android.allytest.models.routes.Stop;
 import java.util.ArrayList;
 
 /**
+ * Adapter that can handle a header view (a Horizontal RecyclerView) and a list of views.
+ * I chose to use a RecyclerView because the route can have multiple segments.
+ * <p/>
  * Created by betomaluje on 1/3/16.
  */
 public class StopsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private static final int TYPE_HEADER = 0;  // Declaring Variable to Understand which View is being worked on
-    // IF the viaew under inflation and population is header or Item
+    // Declaring Variable to Understand which View is being worked on
+    private static final int TYPE_HEADER = 0;
+    // IF the view under inflation and population is header or Item
     private static final int TYPE_ITEM = 1;
 
     private ArrayList<Segment> mSegments;
@@ -41,6 +45,9 @@ public class StopsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.View
         this.mStops = new ArrayList<>();
 
         for (Segment s : this.mSegments) {
+            for (Stop stop : s.getStops()) {
+                stop.setColor(s.getColor());
+            }
             mStops.addAll(s.getStops());
         }
     }
@@ -50,18 +57,15 @@ public class StopsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.View
     }
 
     public class StopViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        public int viewType;
-        public TextView textView_name, textView_type, textView_price;
-        public ImageView imageView_icon;
 
-        public View progressBar;
+        public View view_color;
+        public TextView textView_name;
 
         public StopViewHolder(View itemView) {
             super(itemView);
 
+            this.view_color = itemView.findViewById(R.id.view_color);
             this.textView_name = (TextView) itemView.findViewById(R.id.textView_name);
-            this.textView_type = (TextView) itemView.findViewById(R.id.textView_type);
-            this.textView_price = (TextView) itemView.findViewById(R.id.textView_price);
 
             itemView.setOnClickListener(this);
         }
@@ -83,7 +87,6 @@ public class StopsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.View
 
             this.recyclerView_route = (RecyclerView) itemView.findViewById(R.id.recyclerView_route);
         }
-
     }
 
     @Override
@@ -117,9 +120,8 @@ public class StopsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.View
 
             Stop stop = mStops.get(position - 1);
 
+            vHolder2.view_color.setBackgroundColor(Color.parseColor(stop.getColor()));
             vHolder2.textView_name.setText(stop.getName());
-            //vHolder2.textView_type.setText(stop.getProperties().getCompanies().get(0).getName());
-            vHolder2.textView_price.setText(stop.getDatetime());
         }
     }
 
@@ -128,6 +130,11 @@ public class StopsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.View
         return position == 0 ? TYPE_HEADER : TYPE_ITEM;
     }
 
+    /**
+     * We need to add one because we have a header
+     *
+     * @return number of rows in the adapter
+     */
     @Override
     public int getItemCount() {
         return mStops.size() + 1;

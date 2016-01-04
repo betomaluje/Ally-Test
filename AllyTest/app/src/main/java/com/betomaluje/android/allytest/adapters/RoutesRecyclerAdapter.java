@@ -13,6 +13,8 @@ import com.betomaluje.android.allytest.models.routes.Route;
 import java.util.ArrayList;
 
 /**
+ * Normal RecyclerView Adapter. It has another RecyclerView and shows Horizontally each segment
+ * <p/>
  * Created by betomaluje on 12/31/15.
  */
 public class RoutesRecyclerAdapter extends RecyclerView.Adapter<RoutesRecyclerAdapter.RouteViewHolder> {

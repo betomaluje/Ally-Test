@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.util.HashMap;
 
 /**
+ * Singleton class that Caches each SVG file downloaded from the Network in a hashmap.
+ * <p/>
  * Created by betomaluje on 12/31/15.
  */
 public class ImageCacheUtil {
@@ -68,9 +70,6 @@ public class ImageCacheUtil {
      * Bitmap.CompressFormat can be PNG,JPEG or WEBP.
      * <p/>
      * quality goes from 1 to 100. (Percentage).
-     * <p/>
-     * dir you can get from many places like Environment.getExternalStorageDirectory() or mContext.getFilesDir()
-     * depending on where you want to save the image.
      */
     private boolean saveBitmapToFile(File dir, String fileName, Bitmap bm,
                                      Bitmap.CompressFormat format, int quality) {

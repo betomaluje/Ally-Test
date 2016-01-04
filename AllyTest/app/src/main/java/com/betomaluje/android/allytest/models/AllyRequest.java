@@ -8,6 +8,8 @@ import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 
 /**
+ * Simple class that stores all routes and provider attributes from the json file
+ * <p/>
  * Created by betomaluje on 12/30/15.
  */
 public class AllyRequest {

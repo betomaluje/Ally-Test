@@ -14,7 +14,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Display;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,7 +30,6 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
@@ -40,7 +38,7 @@ import com.squareup.otto.Subscribe;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     public static final String EXTRA_IMAGE = "com.betomaluje.android.allytest.activities.extraImage";
 
@@ -52,7 +50,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -73,31 +70,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         ViewCompat.setTransitionName(recyclerView_stops, EXTRA_IMAGE);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            recyclerView_stops.setOnScrollChangeListener(new View.OnScrollChangeListener() {
-                @Override
-                public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-                    Log.e("SCROLL", "scroll 1: " + scrollY);
-                }
-            });
-        } else {
-            recyclerView_stops.setOnScrollListener(new RecyclerView.OnScrollListener() {
-                @Override
-                public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                    super.onScrolled(recyclerView, dx, dy);
-                    Log.e("SCROLL", "scroll 2: " + dy);
-                }
-
-                @Override
-                public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                    super.onScrollStateChanged(recyclerView, newState);
-                }
-            });
-        }
-
         BusStation.getBus().register(this);
     }
 
+    /**
+     * This method adjusts the AppBarLayout's height to 70% of the screen's height.
+     * It also disables the dragging behaviour to let the user navigate through the map.
+     */
     private void initAppBarLayout() {
         //first we disable scroll of AppBarLayout in CoordinatorLayout
         AppBarLayout appBarLayout = (AppBarLayout) findViewById(R.id.appbar);
@@ -129,6 +108,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         params.height = (int) (measuredheight * 0.7f);
     }
 
+    /**
+     * This method populates the RecyclerView with a header (all segments of a route) and all the stops of the entire route
+     */
     private void fillSegments() {
         StopsRecyclerAdapter adapter = new StopsRecyclerAdapter(MapsActivity.this, route.getSegments());
         recyclerView_stops.setLayoutManager(new LinearLayoutManager(MapsActivity.this));
@@ -146,8 +128,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
+     * This is where we can add markers or lines, add listeners or move the camera.
      * If Google Play services is not installed on the device, the user will be prompted to install
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
@@ -155,7 +136,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        mMap.setOnMarkerClickListener(this);
+        //mMap.setOnMarkerClickListener(this);
 
         if (route == null)
             return;
@@ -163,21 +144,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //we need to add each segment to the map
 
         int length = route.getSegments().size();
+
+        //now we add the polyline and a marker each time the segment changes
         for (int i = 0; i < length; i++) {
             Segment segment = route.getSegments().get(i);
 
-            String markerTitle = "";
-            for (Stop stop : segment.getStops()) {
-                LatLng point = new LatLng(stop.getLat(), stop.getLng());
+            //we only put the first marker of each stop on the map
+            Stop stop = segment.getStops().get(0);
+            LatLng point = new LatLng(stop.getLat(), stop.getLng());
+            mMap.addMarker(new MarkerOptions().position(point).title(stop.getStopName()));
 
-                markerTitle = stop.getName() != null && !TextUtils.isEmpty(stop.getName()) ? stop.getName() : "";
-
-                mMap.addMarker(new MarkerOptions().position(point).title(markerTitle));
-
-                //we check if it's our starting point
-                if (i == 0) {
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(point, 13f));
-                }
+            //we check if it's our starting point
+            if (i == 0) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(point, 13f));
             }
 
             if (segment.getPolyline() != null && !TextUtils.isEmpty(segment.getPolyline())) {
@@ -186,13 +165,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         .addAll(line)
                         .color(Color.parseColor(segment.getColor())));
             }
-        }
-    }
 
-    @Override
-    public boolean onMarkerClick(Marker marker) {
-        //marker.getPosition();
-        return false;
+        }
     }
 
     @Override
@@ -200,7 +174,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         switch (item.getItemId()) {
             // Respond to the action bar's Up/Home button
             case android.R.id.home:
-                this.finish();
+                //not finish because it didn't restore the animation
+                super.onBackPressed();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -213,6 +188,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         BusStation.getBus().unregister(this);
     }
 
+    /*
+    Next two methods are used to populate data from the Otto Event Bus.
+     */
     @Subscribe
     public void onAllRoutesPassed(ArrayList<Route> routes) {
 

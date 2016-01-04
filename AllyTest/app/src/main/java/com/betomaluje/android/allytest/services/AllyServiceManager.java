@@ -12,6 +12,8 @@ import java.io.InputStream;
 import java.util.List;
 
 /**
+ * Simple Singleton class to load the json file. If the json has to be loaded from the Network, we could use retrofit or similar in this class with a JSONObject variable.
+ * <p/>
  * Created by betomaluje on 12/30/15.
  */
 public class AllyServiceManager {

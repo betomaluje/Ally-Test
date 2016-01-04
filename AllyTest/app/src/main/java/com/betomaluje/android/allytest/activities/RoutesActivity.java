@@ -45,10 +45,6 @@ public class RoutesActivity extends AppCompatActivity {
         recyclerView_route = (RecyclerView) findViewById(R.id.recyclerView_route);
         recyclerView_route.setHasFixedSize(true);
 
-        //we add a divider (instead of creating it on the XML)
-        RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL_LIST);
-        recyclerView_route.addItemDecoration(itemDecoration);
-
         //we don't need to modify much of the LinearLayoutManager
         recyclerView_route.setLayoutManager(new LinearLayoutManager(RoutesActivity.this));
 
@@ -76,6 +72,7 @@ public class RoutesActivity extends AppCompatActivity {
                 ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(RoutesActivity.this, v, MapsActivity.EXTRA_IMAGE);
                 ActivityCompat.startActivity(RoutesActivity.this, new Intent(RoutesActivity.this, MapsActivity.class), options.toBundle());
 
+                //now we send it to the event bus
                 BusStation.postOnMain(produceSingleRoute());
                 BusStation.postToSameThread(produceManyRoute());
             }

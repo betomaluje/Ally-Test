@@ -2,6 +2,7 @@ package com.betomaluje.android.allytest.models.routes;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.text.TextUtils;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -26,6 +27,8 @@ public class Stop implements Parcelable {
     @SerializedName("properties")
     @Expose
     private Properties properties;
+
+    private String color;
 
     /**
      * @return The lat
@@ -83,6 +86,10 @@ public class Stop implements Parcelable {
         this.name = name;
     }
 
+    public String getStopName() {
+        return name != null && !TextUtils.isEmpty(name) ? name : "";
+    }
+
     /**
      * @return The properties
      */
@@ -97,6 +104,13 @@ public class Stop implements Parcelable {
         this.properties = properties;
     }
 
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
 
     protected Stop(Parcel in) {
         lat = in.readDouble();
@@ -104,6 +118,7 @@ public class Stop implements Parcelable {
         datetime = in.readString();
         name = in.readString();
         properties = (Properties) in.readValue(Properties.class.getClassLoader());
+        color = in.readString();
     }
 
     @Override
@@ -118,6 +133,7 @@ public class Stop implements Parcelable {
         dest.writeString(datetime);
         dest.writeString(name);
         dest.writeValue(properties);
+        dest.writeString(color);
     }
 
     @SuppressWarnings("unused")
