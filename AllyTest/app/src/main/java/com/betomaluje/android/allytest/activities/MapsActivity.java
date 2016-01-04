@@ -20,11 +20,10 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.betomaluje.android.allytest.R;
-import com.betomaluje.android.allytest.adapters.SegmentsRecyclerAdapter;
+import com.betomaluje.android.allytest.adapters.StopsRecyclerAdapter;
 import com.betomaluje.android.allytest.models.routes.Route;
 import com.betomaluje.android.allytest.models.routes.Segment;
 import com.betomaluje.android.allytest.models.routes.Stop;
-import com.betomaluje.android.allytest.views.DividerItemDecoration;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -67,13 +66,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             recyclerView_stops = (RecyclerView) findViewById(R.id.recyclerView_stops);
             recyclerView_stops.setHasFixedSize(true);
-            recyclerView_stops.setLayoutManager(new LinearLayoutManager(MapsActivity.this));
+
+            //recyclerView_stops.setLayoutManager(new LinearLayoutManager(MapsActivity.this));
 
             ViewCompat.setTransitionName(recyclerView_stops, EXTRA_IMAGE);
 
             //we add a divider (instead of creating it on the XML)
-            RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL_LIST);
-            recyclerView_stops.addItemDecoration(itemDecoration);
+            //RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL_LIST);
+            //recyclerView_stops.addItemDecoration(itemDecoration);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 recyclerView_stops.setOnScrollChangeListener(new View.OnScrollChangeListener() {
@@ -136,12 +136,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void fillSegments() {
-        SegmentsRecyclerAdapter adapter = new SegmentsRecyclerAdapter(MapsActivity.this, route.getSegments());
+        StopsRecyclerAdapter adapter = new StopsRecyclerAdapter(MapsActivity.this, route.getSegments());
+        recyclerView_stops.setLayoutManager(new LinearLayoutManager(MapsActivity.this));
 
-        adapter.setOnRouteClickListener(new SegmentsRecyclerAdapter.OnSegmentClickListener() {
+        adapter.setOnStopClickListener(new StopsRecyclerAdapter.OnStopClickListener() {
             @Override
-            public void OnSegmentClicked(View v, Segment segment) {
-                LatLng point = new LatLng(segment.getStops().get(0).getLat(), segment.getStops().get(0).getLng());
+            public void OnStopClicked(View v, Stop stop) {
+                LatLng point = new LatLng(stop.getLat(), stop.getLng());
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(point, 13f));
             }
         });

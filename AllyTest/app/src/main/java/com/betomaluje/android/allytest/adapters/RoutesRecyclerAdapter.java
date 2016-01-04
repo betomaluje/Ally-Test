@@ -1,9 +1,8 @@
 package com.betomaluje.android.allytest.adapters;
 
 import android.content.Context;
-import android.support.v4.view.ViewPager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +18,7 @@ import java.util.ArrayList;
 public class RoutesRecyclerAdapter extends RecyclerView.Adapter<RoutesRecyclerAdapter.RouteViewHolder> {
 
     private Context mContext;
+
     private ArrayList<Route> mRoutes;
     private OnRouteClickListener onRouteClickListener;
 
@@ -26,15 +26,20 @@ public class RoutesRecyclerAdapter extends RecyclerView.Adapter<RoutesRecyclerAd
         void OnRouteClicked(View v, Route route);
     }
 
+    public RoutesRecyclerAdapter(Context context, ArrayList<Route> routes) {
+        this.mContext = context;
+        this.mRoutes = routes;
+    }
+
     public class RouteViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        ViewPager viewpager;
+        private RecyclerView recyclerView_route;
 
         public RouteViewHolder(View itemView) {
             super(itemView);
-            this.viewpager = (ViewPager) itemView.findViewById(R.id.viewpager);
+            this.recyclerView_route = (RecyclerView) itemView.findViewById(R.id.recyclerView_route);
 
-            //itemView.setOnClickListener(this);
+            itemView.findViewById(R.id.view_dummy).setOnClickListener(this);
         }
 
         @Override
@@ -44,11 +49,7 @@ public class RoutesRecyclerAdapter extends RecyclerView.Adapter<RoutesRecyclerAd
             if (onRouteClickListener != null)
                 onRouteClickListener.OnRouteClicked(v, mRoutes.get(position));
         }
-    }
 
-    public RoutesRecyclerAdapter(Context context, ArrayList<Route> routes) {
-        this.mContext = context;
-        this.mRoutes = routes;
     }
 
     public void setOnRouteClickListener(OnRouteClickListener onRouteClickListener) {
@@ -58,19 +59,19 @@ public class RoutesRecyclerAdapter extends RecyclerView.Adapter<RoutesRecyclerAd
     @Override
     public RouteViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(mContext).inflate(R.layout.item_route, parent, false);
-        RouteViewHolder cardViewHolder = new RouteViewHolder(view);
 
-        return cardViewHolder;
+        return new RouteViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(final RouteViewHolder holder, final int listPosition) {
         Route route = mRoutes.get(listPosition);
 
-        RoutesPagerAdapter adapter = new RoutesPagerAdapter(mContext, route);
-        adapter.setOnRouteClickListener(onRouteClickListener);
-        holder.viewpager.setAdapter(adapter);
-        adapter.notifyDataSetChanged();
+        SegmentsRecyclerAdapter adapter = new SegmentsRecyclerAdapter(mContext, route.getSegments());
+        LinearLayoutManager layoutManager = new LinearLayoutManager(mContext);
+        layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+        holder.recyclerView_route.setLayoutManager(layoutManager);
+        holder.recyclerView_route.setAdapter(adapter);
     }
 
     @Override
