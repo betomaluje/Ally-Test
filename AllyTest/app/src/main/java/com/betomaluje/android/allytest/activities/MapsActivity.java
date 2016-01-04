@@ -19,13 +19,13 @@ import android.view.Display;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Toast;
 
 import com.betomaluje.android.allytest.R;
 import com.betomaluje.android.allytest.adapters.StopsRecyclerAdapter;
 import com.betomaluje.android.allytest.models.routes.Route;
 import com.betomaluje.android.allytest.models.routes.Segment;
 import com.betomaluje.android.allytest.models.routes.Stop;
+import com.betomaluje.android.allytest.utils.bus.BusStation;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -35,7 +35,9 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
+import com.squareup.otto.Subscribe;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
@@ -51,6 +53,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
@@ -59,56 +62,40 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             actionBar.setDisplayShowTitleEnabled(false);
         }
 
-        Bundle b = getIntent().getExtras();
+        initAppBarLayout();
 
-        if (b != null) {
-            route = b.getParcelable("route");
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
 
-            initAppBarLayout();
+        recyclerView_stops = (RecyclerView) findViewById(R.id.recyclerView_stops);
+        recyclerView_stops.setHasFixedSize(true);
 
-            // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-            SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                    .findFragmentById(R.id.map);
-            mapFragment.getMapAsync(this);
+        ViewCompat.setTransitionName(recyclerView_stops, EXTRA_IMAGE);
 
-            recyclerView_stops = (RecyclerView) findViewById(R.id.recyclerView_stops);
-            recyclerView_stops.setHasFixedSize(true);
-
-            //recyclerView_stops.setLayoutManager(new LinearLayoutManager(MapsActivity.this));
-
-            ViewCompat.setTransitionName(recyclerView_stops, EXTRA_IMAGE);
-
-            //we add a divider (instead of creating it on the XML)
-            //RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL_LIST);
-            //recyclerView_stops.addItemDecoration(itemDecoration);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                recyclerView_stops.setOnScrollChangeListener(new View.OnScrollChangeListener() {
-                    @Override
-                    public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-                        Log.e("SCROLL", "scroll 1: " + scrollY);
-                    }
-                });
-            } else {
-                recyclerView_stops.setOnScrollListener(new RecyclerView.OnScrollListener() {
-                    @Override
-                    public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                        super.onScrolled(recyclerView, dx, dy);
-                        Log.e("SCROLL", "scroll 2: " + dy);
-                    }
-
-                    @Override
-                    public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                        super.onScrollStateChanged(recyclerView, newState);
-                    }
-                });
-            }
-
-            fillSegments();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            recyclerView_stops.setOnScrollChangeListener(new View.OnScrollChangeListener() {
+                @Override
+                public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
+                    Log.e("SCROLL", "scroll 1: " + scrollY);
+                }
+            });
         } else {
-            Toast.makeText(MapsActivity.this, getString(R.string.error_no_content), Toast.LENGTH_SHORT).show();
-            finish();
+            recyclerView_stops.setOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+                    Log.e("SCROLL", "scroll 2: " + dy);
+                }
+
+                @Override
+                public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                    super.onScrollStateChanged(recyclerView, newState);
+                }
+            });
         }
+
+        BusStation.getBus().register(this);
     }
 
     private void initAppBarLayout() {
@@ -218,4 +205,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        BusStation.getBus().unregister(this);
+    }
+
+    @Subscribe
+    public void onAllRoutesPassed(ArrayList<Route> routes) {
+
+    }
+
+    @Subscribe
+    public void onSelectedRoutePassed(Route route) {
+        this.route = route;
+
+        fillSegments();
+    }
+
 }

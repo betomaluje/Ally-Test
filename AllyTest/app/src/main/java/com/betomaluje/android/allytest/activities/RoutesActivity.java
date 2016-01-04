@@ -17,7 +17,11 @@ import com.betomaluje.android.allytest.adapters.RoutesRecyclerAdapter;
 import com.betomaluje.android.allytest.models.AllyRequest;
 import com.betomaluje.android.allytest.models.routes.Route;
 import com.betomaluje.android.allytest.services.AllyServiceManager;
+import com.betomaluje.android.allytest.utils.bus.BusStation;
 import com.betomaluje.android.allytest.views.DividerItemDecoration;
+import com.squareup.otto.Produce;
+
+import java.util.ArrayList;
 
 /**
  * Created by betomaluje on 12/30/15.
@@ -25,11 +29,15 @@ import com.betomaluje.android.allytest.views.DividerItemDecoration;
 public class RoutesActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView_route;
+    private Route selectedRoute;
+    private AllyRequest allyRequest;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_routes);
+
+        BusStation.getBus().register(this);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -48,7 +56,7 @@ public class RoutesActivity extends AppCompatActivity {
     }
 
     private void fillRoutes() {
-        AllyRequest allyRequest = AllyServiceManager.getInstance().init(RoutesActivity.this);
+        allyRequest = AllyServiceManager.getInstance().init(RoutesActivity.this);
 
         RoutesRecyclerAdapter adapter = new RoutesRecyclerAdapter(RoutesActivity.this, allyRequest.getRoutes());
 
@@ -56,11 +64,7 @@ public class RoutesActivity extends AppCompatActivity {
             @Override
             public void OnRouteClicked(View v, Route route) {
 
-                Intent intent = new Intent(RoutesActivity.this, MapsActivity.class);
-
-                Bundle bundle = new Bundle();
-                bundle.putParcelable("route", route);
-                intent.putExtras(bundle);
+                selectedRoute = route;
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     Slide transition = new Slide();
@@ -70,11 +74,30 @@ public class RoutesActivity extends AppCompatActivity {
                 }
 
                 ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(RoutesActivity.this, v, MapsActivity.EXTRA_IMAGE);
-                ActivityCompat.startActivity(RoutesActivity.this, intent, options.toBundle());
+                ActivityCompat.startActivity(RoutesActivity.this, new Intent(RoutesActivity.this, MapsActivity.class), options.toBundle());
+
+                BusStation.postOnMain(produceSingleRoute());
+                BusStation.postToSameThread(produceManyRoute());
             }
         });
 
         recyclerView_route.setAdapter(adapter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        BusStation.getBus().unregister(this);
+    }
+
+    @Produce
+    public Route produceSingleRoute() {
+        return selectedRoute;
+    }
+
+    @Produce
+    public ArrayList<Route> produceManyRoute() {
+        return allyRequest.getRoutes();
     }
 
 }

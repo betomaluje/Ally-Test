@@ -100,6 +100,8 @@ public class Route implements Parcelable {
         this.price = price;
     }
 
+    public Route() {
+    }
 
     protected Route(Parcel in) {
         type = in.readString();
