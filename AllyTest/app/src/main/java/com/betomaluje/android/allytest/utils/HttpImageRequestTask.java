@@ -40,9 +40,15 @@ public class HttpImageRequestTask extends AsyncTask<String, Void, Drawable> {
             InputStream inputStream = urlConnection.getInputStream();
             SVG svg = SVG.getFromInputStream(inputStream);
 
-            Drawable drawable = new PictureDrawable(svg.renderToPicture());
+            PictureDrawable drawable = new PictureDrawable(svg.renderToPicture());
 
-            ImageCacheUtil.getInstance().putImage(params[0], drawable);
+            ImageCacheUtil imageCacheUtil = ImageCacheUtil.getInstance();
+
+            imageCacheUtil.putImage(params[0], drawable);
+
+            String filename = params[0].replace("https://d3m2tfu2xpiope.cloudfront.net/vehicles/", "").replace(".svg", ".png");
+
+            imageCacheUtil.saveImageToFile(drawable, filename);
 
             return drawable;
         } catch (Exception e) {

@@ -1,7 +1,7 @@
 package com.betomaluje.android.allytest.adapters;
 
 import android.content.Context;
-import android.graphics.drawable.Drawable;
+import android.graphics.Bitmap;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -60,15 +60,27 @@ public class SegmentsRecyclerAdapter extends RecyclerView.Adapter<SegmentsRecycl
 
         if (segment.getIconUrl() != null && !TextUtils.isEmpty(segment.getIconUrl())) {
 
-            Drawable image = ImageCacheUtil.getInstance().getImage(segment.getIconUrl());
+            ImageCacheUtil imageCacheUtil = ImageCacheUtil.getInstance();
 
-            if (image != null) {
+            String filename = segment.getIconUrl().replace("https://d3m2tfu2xpiope.cloudfront.net/vehicles/", "").replace(".svg", ".png");
+
+            //first we try getting the image from local saved images
+            if (imageCacheUtil.getImageFromFile(holder.imageView_icon, filename)) {
                 holder.imageView_icon.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-                holder.imageView_icon.setImageDrawable(image);
                 holder.progressBar.setVisibility(View.GONE);
             } else {
-                new HttpImageRequestTask(holder.imageView_icon, holder.progressBar).execute(segment.getIconUrl());
+                //if we haven't saved the image previously, we try getting it from our cache system
+                Bitmap image = imageCacheUtil.getImage(segment.getIconUrl());
+
+                if (image != null) {
+                    holder.imageView_icon.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+                    holder.imageView_icon.setImageBitmap(image);
+                    holder.progressBar.setVisibility(View.GONE);
+                } else {
+                    new HttpImageRequestTask(holder.imageView_icon, holder.progressBar).execute(segment.getIconUrl());
+                }
             }
+
         }
     }
 
