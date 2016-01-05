@@ -20,6 +20,7 @@ import android.view.View;
 import android.view.WindowManager;
 
 import com.betomaluje.android.allytest.R;
+import com.betomaluje.android.allytest.adapters.SegmentsRecyclerAdapter;
 import com.betomaluje.android.allytest.adapters.StopsRecyclerAdapter;
 import com.betomaluje.android.allytest.models.routes.Route;
 import com.betomaluje.android.allytest.models.routes.Segment;
@@ -43,7 +44,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public static final String EXTRA_IMAGE = "com.betomaluje.android.allytest.activities.extraImage";
 
     private GoogleMap mMap;
-    private RecyclerView recyclerView_stops;
+    private RecyclerView recyclerView_stops, recyclerView_route;
     private Route route;
 
     @Override
@@ -68,7 +69,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         recyclerView_stops = (RecyclerView) findViewById(R.id.recyclerView_stops);
         recyclerView_stops.setHasFixedSize(true);
 
-        ViewCompat.setTransitionName(recyclerView_stops, EXTRA_IMAGE);
+        recyclerView_route = (RecyclerView) findViewById(R.id.recyclerView_route);
+
+        ViewCompat.setTransitionName(findViewById(R.id.cardView), EXTRA_IMAGE);
 
         BusStation.getBus().register(this);
     }
@@ -112,6 +115,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      * This method populates the RecyclerView with a header (all segments of a route) and all the stops of the entire route
      */
     private void fillSegments() {
+        SegmentsRecyclerAdapter adapterHeader = new SegmentsRecyclerAdapter(MapsActivity.this, route.getSegments());
+        LinearLayoutManager layoutManager = new LinearLayoutManager(MapsActivity.this);
+        layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+        recyclerView_route.setLayoutManager(layoutManager);
+        recyclerView_route.setAdapter(adapterHeader);
+
         StopsRecyclerAdapter adapter = new StopsRecyclerAdapter(MapsActivity.this, route.getSegments());
         recyclerView_stops.setLayoutManager(new LinearLayoutManager(MapsActivity.this));
 
@@ -136,6 +145,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+
         //mMap.setOnMarkerClickListener(this);
 
         if (route == null)

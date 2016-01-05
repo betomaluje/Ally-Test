@@ -9,7 +9,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.transition.Explode;
 import android.transition.Slide;
+import android.transition.Transition;
 import android.view.View;
 
 import com.betomaluje.android.allytest.R;
@@ -18,7 +20,6 @@ import com.betomaluje.android.allytest.models.AllyRequest;
 import com.betomaluje.android.allytest.models.routes.Route;
 import com.betomaluje.android.allytest.services.AllyServiceManager;
 import com.betomaluje.android.allytest.utils.bus.BusStation;
-import com.betomaluje.android.allytest.views.DividerItemDecoration;
 import com.squareup.otto.Produce;
 
 import java.util.ArrayList;
@@ -35,6 +36,21 @@ public class RoutesActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //for transitions
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Transition explode = new Explode();
+            explode.excludeTarget(android.R.id.statusBarBackground, true);
+            explode.excludeTarget(android.R.id.navigationBarBackground, true);
+            getWindow().setEnterTransition(explode);
+            getWindow().setReturnTransition(explode);
+
+            Transition move = new Slide();
+            move.excludeTarget(android.R.id.statusBarBackground, true);
+            move.excludeTarget(android.R.id.navigationBarBackground, true);
+            getWindow().setSharedElementEnterTransition(move);
+        }
+
         setContentView(R.layout.activity_routes);
 
         BusStation.getBus().register(this);
@@ -61,13 +77,6 @@ public class RoutesActivity extends AppCompatActivity {
             public void OnRouteClicked(View v, Route route) {
 
                 selectedRoute = route;
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    Slide transition = new Slide();
-                    transition.excludeTarget(android.R.id.statusBarBackground, true);
-                    getWindow().setEnterTransition(transition);
-                    getWindow().setReturnTransition(transition);
-                }
 
                 ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(RoutesActivity.this, v, MapsActivity.EXTRA_IMAGE);
                 ActivityCompat.startActivity(RoutesActivity.this, new Intent(RoutesActivity.this, MapsActivity.class), options.toBundle());

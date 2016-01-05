@@ -3,10 +3,7 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="android:windowEnterTransition">@android:transition/explode</item>
-        <item name="android:windowReturnTransition">@android:transition/explode</item>
-        <item name="android:windowSharedElementEnterTransition">@android:transition/move</item>
-        <item name="android:windowSharedElementReturnTransition">@android:transition/move</item>
+        <item name="android:windowContentTransitions">true</item>
     </style>
 
 </resources>
