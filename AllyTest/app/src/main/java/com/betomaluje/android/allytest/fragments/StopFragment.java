@@ -1,8 +1,10 @@
 package com.betomaluje.android.allytest.fragments;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -28,15 +30,19 @@ public class StopFragment extends Fragment {
     private Context context;
 
     private Route route;
+    private int position;
+    private int mStartingPosition;
 
     private View cardView;
     private RecyclerView recyclerView_stops, recyclerView_route;
     private StopsRecyclerAdapter.OnStopClickListener onStopClickListener;
 
-    public static StopFragment newInstance(Route route) {
+    public static StopFragment newInstance(Route route, int position, int mStartingPosition) {
         StopFragment fragment = new StopFragment();
         Bundle b = new Bundle();
         b.putParcelable("route", route);
+        b.putInt("position", position);
+        b.putInt("mStartingPosition", mStartingPosition);
         fragment.setArguments(b);
 
         return fragment;
@@ -53,8 +59,16 @@ public class StopFragment extends Fragment {
 
         Bundle b = getArguments();
 
-        if (b != null && b.containsKey("route"))
-            this.route = getArguments().getParcelable("route");
+        if (b != null) {
+            if (b.containsKey("route"))
+                this.route = b.getParcelable("route");
+
+            if (b.containsKey("position"))
+                this.position = b.getInt("position", 0);
+
+            if (b.containsKey("mStartingPosition"))
+                this.mStartingPosition = b.getInt("mStartingPosition", 0);
+        }
     }
 
     @Nullable
@@ -76,19 +90,31 @@ public class StopFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            ViewCompat.setTransitionName(cardView, MapsActivity.EXTRA_IMAGE);
+            ViewCompat.setTransitionName(cardView, MapsActivity.EXTRA_IMAGE + position);
         }
 
-        fillSegments();
+        fillSegmentsAndStops();
 
-        //startPostponedEnterTransition();
-        ActivityCompat.startPostponedEnterTransition(getActivity());
+        startPostponedEnterTransition();
+    }
+
+    private void startPostponedEnterTransition() {
+        if (position == mStartingPosition) {
+            cardView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    cardView.getViewTreeObserver().removeOnPreDrawListener(this);
+                    ActivityCompat.startPostponedEnterTransition(getActivity());
+                    return true;
+                }
+            });
+        }
     }
 
     /**
      * This method populates the RecyclerView with a header (all segments of a route) and all the stops of the entire route
      */
-    private void fillSegments() {
+    private void fillSegmentsAndStops() {
         SegmentsRecyclerAdapter adapterHeader = new SegmentsRecyclerAdapter(context, route.getSegments());
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
         layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
@@ -104,16 +130,24 @@ public class StopFragment extends Fragment {
         recyclerView_stops.setAdapter(adapter);
     }
 
-    private void startPostponedEnterTransition() {
-        //if (mAlbumPosition == mStartingPosition) {
-        cardView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                cardView.getViewTreeObserver().removeOnPreDrawListener(this);
-                ActivityCompat.startPostponedEnterTransition(getActivity());
-                return true;
-            }
-        });
-        //}
+    /**
+     * Returns the shared element that should be transitioned back to the previous Activity,
+     * or null if the view is not visible on the screen.
+     */
+    @Nullable
+    public View getCardView() {
+        if (isViewInBounds(getActivity().getWindow().getDecorView(), cardView)) {
+            return cardView;
+        }
+        return null;
+    }
+
+    /**
+     * Returns true if {@param view} is contained within {@param container}'s bounds.
+     */
+    private static boolean isViewInBounds(@NonNull View container, @NonNull View view) {
+        Rect containerBounds = new Rect();
+        container.getHitRect(containerBounds);
+        return view.getLocalVisibleRect(containerBounds);
     }
 }

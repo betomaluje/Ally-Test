@@ -60,7 +60,7 @@ public class SegmentsRecyclerAdapter extends RecyclerView.Adapter<SegmentsRecycl
 
         if (segment.getIconUrl() != null && !TextUtils.isEmpty(segment.getIconUrl())) {
 
-            ImageCacheUtil imageCacheUtil = ImageCacheUtil.getInstance();
+            ImageCacheUtil imageCacheUtil = ImageCacheUtil.getInstance(context);
 
             String filename = segment.getIconUrl().replace("https://d3m2tfu2xpiope.cloudfront.net/vehicles/", "").replace(".svg", ".png");
 
@@ -77,7 +77,7 @@ public class SegmentsRecyclerAdapter extends RecyclerView.Adapter<SegmentsRecycl
                     holder.imageView_icon.setImageBitmap(image);
                     holder.progressBar.setVisibility(View.GONE);
                 } else {
-                    new HttpImageRequestTask(holder.imageView_icon, holder.progressBar).execute(segment.getIconUrl());
+                    new HttpImageRequestTask(context, holder.imageView_icon, holder.progressBar).execute(segment.getIconUrl());
                 }
             }
 

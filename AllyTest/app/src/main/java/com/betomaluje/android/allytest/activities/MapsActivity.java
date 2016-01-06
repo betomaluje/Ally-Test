@@ -13,13 +13,13 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.SharedElementCallback;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.transition.Slide;
-import android.transition.Transition;
+import android.util.TypedValue;
 import android.view.Display;
 import android.view.MenuItem;
 import android.view.View;
@@ -48,15 +48,17 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
 import com.squareup.otto.Subscribe;
+import com.viewpagerindicator.CirclePageIndicator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
 
-    public static final String EXTRA_IMAGE = "com.betomaluje.android.allytest.activities.extraImage";
+    public static final String EXTRA_IMAGE = "transitionName_";
 
     private static final String STATE_STARTING_PAGE_POSITION = "state_starting_page_position";
     private static final String STATE_CURRENT_PAGE_POSITION = "state_current_page_position";
@@ -64,22 +66,52 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GoogleMap mMap;
 
     private ViewPager viewPager;
+    private CirclePageIndicator circlePageIndicator;
 
     private ArrayList<Route> allRoutes;
     private Route route;
-    private int position;
-    private int mCurrentPosition;
+    private int mStartingPosition;
 
     //user's location
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
     private LocationRequest mLocationRequest;
 
+    //for the transitions
+    private final SharedElementCallback mCallback = new SharedElementCallback() {
+        @Override
+        public void onMapSharedElements(List<String> names, Map<String, View> sharedElements) {
+            if (mIsReturning) {
+                View sharedElement = mCurrentStopFragment.getCardView();
+                if (sharedElement == null) {
+                    // If shared element is null, then it has been scrolled off screen and
+                    // no longer visible. In this case we cancel the shared element transition by
+                    // removing the shared element from the shared elements map.
+                    names.clear();
+                    sharedElements.clear();
+                } else if (mStartingPosition != mCurrentPosition) {
+                    // If the user has swiped to a different ViewPager page, then we need to
+                    // remove the old shared element and replace it with the new shared element
+                    // that should be transitioned instead.
+                    names.clear();
+                    names.add(MapsActivity.EXTRA_IMAGE + mCurrentPosition);
+                    sharedElements.clear();
+                    sharedElements.put(MapsActivity.EXTRA_IMAGE + mCurrentPosition, sharedElement);
+                }
+            }
+        }
+    };
+
+    private StopFragment mCurrentStopFragment;
+    private int mCurrentPosition;
+    private boolean mIsReturning;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         ActivityCompat.postponeEnterTransition(this);
+        ActivityCompat.setEnterSharedElementCallback(this, mCallback);
 
         setContentView(R.layout.activity_maps);
 
@@ -93,20 +125,25 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         initAppBarLayout();
 
-        position = 0;
+        mStartingPosition = 0;
 
         Bundle b = getIntent().getExtras();
-        if (b != null && b.containsKey("position")) {
-            position = b.getInt("position", 0);
+        if (b != null && b.containsKey("mStartingPosition")) {
+            mStartingPosition = b.getInt("mStartingPosition", 0);
         }
 
-        mCurrentPosition = position;
+        if (savedInstanceState == null) {
+            mCurrentPosition = mStartingPosition;
+        } else {
+            mCurrentPosition = savedInstanceState.getInt(STATE_CURRENT_PAGE_POSITION);
+        }
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
         viewPager = (ViewPager) findViewById(R.id.viewPager);
+        circlePageIndicator = (CirclePageIndicator) findViewById(R.id.circlePageIndicator);
 
         BusStation.getBus().register(this);
 
@@ -172,15 +209,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         ArrayList<Fragment> fragments = new ArrayList<>(routes.size());
 
-        for (Route route : routes) {
-            StopFragment f = StopFragment.newInstance(route);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                Transition move = new Slide();
-                move.excludeTarget(android.R.id.statusBarBackground, true);
-                move.excludeTarget(android.R.id.navigationBarBackground, true);
-                f.setSharedElementEnterTransition(move);
-            }
+        for (int i = 0; i < routes.size(); i++) {
+            StopFragment f = StopFragment.newInstance(routes.get(i), i, mStartingPosition);
 
             f.setOnStopClickListener(new StopsRecyclerAdapter.OnStopClickListener() {
                 @Override
@@ -196,9 +226,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         final FragmentViewPagerAdapter adapter = new FragmentViewPagerAdapter(getSupportFragmentManager(), fragments);
         viewPager.setAdapter(adapter);
 
-        viewPager.setCurrentItem(position);
+        circlePageIndicator.setViewPager(viewPager);
+        viewPager.setCurrentItem(mStartingPosition);
+        mCurrentStopFragment = (StopFragment) adapter.getItem(mStartingPosition);
 
-        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+        circlePageIndicator.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
 
@@ -208,6 +240,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onPageSelected(int position) {
                 route = allRoutes.get(position);
                 mCurrentPosition = position;
+
+                mCurrentStopFragment = (StopFragment) adapter.getItem(position);
+
                 drawOnMap();
             }
 
@@ -263,15 +298,35 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
+        //we put a padding for the location button
+        TypedValue tv = new TypedValue();
+        int actionBarHeight = 0;
+        if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+            actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
+        }
+
+        mMap.setPadding(0, actionBarHeight + 32, 16, 16);
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
 
-        //mMap.setOnMarkerClickListener(this);
-
-        if (route == null)
+        if (route == null) {
             return;
+        }
 
         drawOnMap();
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+
+        mMap.setMyLocationEnabled(true);
     }
 
     @Override
@@ -287,9 +342,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(STATE_CURRENT_PAGE_POSITION, mCurrentPosition);
+    }
+
+    @Override
     public void finishAfterTransition() {
+        mIsReturning = true;
         Intent data = new Intent();
-        data.putExtra(STATE_STARTING_PAGE_POSITION, position);
+        data.putExtra(STATE_STARTING_PAGE_POSITION, mStartingPosition);
         data.putExtra(STATE_CURRENT_PAGE_POSITION, mCurrentPosition);
         setResult(RESULT_OK, data);
         super.finishAfterTransition();
@@ -317,12 +379,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /*
-    Next methods are used to populate data from the Otto Event Bus.
+    Next method is used to populate data from the Otto Event Bus.
      */
     @Subscribe
     public void onAllRoutesPassed(ArrayList<Route> routes) {
         this.allRoutes = routes;
-        route = allRoutes.get(position);
+        route = allRoutes.get(mStartingPosition);
 
         fillFragments(routes);
     }

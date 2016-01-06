@@ -1,6 +1,7 @@
 package com.betomaluje.android.allytest.utils;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.PictureDrawable;
 import android.os.AsyncTask;
@@ -20,10 +21,12 @@ import java.net.URL;
  */
 public class HttpImageRequestTask extends AsyncTask<String, Void, Drawable> {
 
+    private Context context;
     private ImageView mImageView;
     private View progressBar;
 
-    public HttpImageRequestTask(ImageView mImageView, View progressBar) {
+    public HttpImageRequestTask(Context context, ImageView mImageView, View progressBar) {
+        this.context = context;
         this.mImageView = mImageView;
         this.progressBar = progressBar;
     }
@@ -44,7 +47,7 @@ public class HttpImageRequestTask extends AsyncTask<String, Void, Drawable> {
 
             PictureDrawable drawable = new PictureDrawable(svg.renderToPicture());
 
-            ImageCacheUtil imageCacheUtil = ImageCacheUtil.getInstance();
+            ImageCacheUtil imageCacheUtil = ImageCacheUtil.getInstance(context);
 
             imageCacheUtil.putImage(params[0], drawable);
 

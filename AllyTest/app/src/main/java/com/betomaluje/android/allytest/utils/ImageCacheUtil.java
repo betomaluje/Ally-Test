@@ -1,10 +1,10 @@
 package com.betomaluje.android.allytest.utils;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.PictureDrawable;
-import android.os.Environment;
 import android.widget.ImageView;
 
 import java.io.File;
@@ -19,12 +19,17 @@ import java.util.HashMap;
  */
 public class ImageCacheUtil {
 
+    private static Context context;
     private static ImageCacheUtil instance;
     private static HashMap<String, Bitmap> images;
 
-    public static ImageCacheUtil getInstance() {
+    public ImageCacheUtil(Context context) {
+        ImageCacheUtil.context = context;
+    }
+
+    public static ImageCacheUtil getInstance(Context context) {
         if (instance == null) {
-            instance = new ImageCacheUtil();
+            instance = new ImageCacheUtil(context);
             images = new HashMap<>();
         }
 
@@ -54,7 +59,7 @@ public class ImageCacheUtil {
         canvas.drawPicture(pd.getPicture());
 
         //now we save it to storage
-        File dir = new File(Environment.getExternalStorageDirectory() + File.separator + ".ally/images");
+        File dir = new File(context.getCacheDir() + File.separator + "images");
 
         boolean doSave = true;
         if (!dir.exists()) {
@@ -100,7 +105,7 @@ public class ImageCacheUtil {
     }
 
     public boolean getImageFromFile(ImageView imageView, String filename) {
-        File dir = new File(Environment.getExternalStorageDirectory() + File.separator + ".ally/images");
+        File dir = new File(context.getCacheDir() + File.separator + "images");
 
         File imgFile = new File(dir, filename);
 
