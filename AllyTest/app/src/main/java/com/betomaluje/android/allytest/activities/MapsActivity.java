@@ -303,9 +303,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         int actionBarHeight = 0;
         if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
             actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
+            actionBarHeight += (int) (TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 32, getResources().getDisplayMetrics()));
         }
 
-        mMap.setPadding(0, actionBarHeight + 32, 16, 16);
+        mMap.setPadding(0, actionBarHeight, 16, 16);
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
 
