@@ -25,7 +25,7 @@ public class RoutesRecyclerAdapter extends RecyclerView.Adapter<RoutesRecyclerAd
     private OnRouteClickListener onRouteClickListener;
 
     public interface OnRouteClickListener {
-        void OnRouteClicked(View v, Route route);
+        void OnRouteClicked(View v, Route route, int position);
     }
 
     public RoutesRecyclerAdapter(Context context, ArrayList<Route> routes) {
@@ -49,7 +49,7 @@ public class RoutesRecyclerAdapter extends RecyclerView.Adapter<RoutesRecyclerAd
             int position = getLayoutPosition();
 
             if (onRouteClickListener != null)
-                onRouteClickListener.OnRouteClicked(v, mRoutes.get(position));
+                onRouteClickListener.OnRouteClicked(v, mRoutes.get(position), position);
         }
 
     }
