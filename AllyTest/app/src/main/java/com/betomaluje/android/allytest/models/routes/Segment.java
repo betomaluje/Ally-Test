@@ -128,7 +128,7 @@ public class Segment implements Parcelable {
      * @return The iconUrl
      */
     public String getIconUrl() {
-        return iconUrl;
+        return iconUrl != null && !TextUtils.isEmpty(iconUrl) ? iconUrl : "";
     }
 
     /**

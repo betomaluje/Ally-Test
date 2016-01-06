@@ -3,7 +3,6 @@ package com.betomaluje.android.allytest.adapters;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.support.v7.widget.RecyclerView;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +17,7 @@ import com.betomaluje.android.allytest.utils.ImageCacheUtil;
 import java.util.ArrayList;
 
 /**
+ * Simple adapter for a RecyclerView. Used for every Segment of a Route
  * Created by betomaluje on 12/31/15.
  */
 public class SegmentsRecyclerAdapter extends RecyclerView.Adapter<SegmentsRecyclerAdapter.SegmentsViewHolder> {
@@ -58,10 +58,11 @@ public class SegmentsRecyclerAdapter extends RecyclerView.Adapter<SegmentsRecycl
 
         holder.textView_name.setText(segment.getName());
 
-        if (segment.getIconUrl() != null && !TextUtils.isEmpty(segment.getIconUrl())) {
+        if (!segment.getIconUrl().isEmpty()) {
 
             ImageCacheUtil imageCacheUtil = ImageCacheUtil.getInstance(context);
 
+            //we somehow get the filename replacing the end point with nothing and the file extension
             String filename = segment.getIconUrl().replace("https://d3m2tfu2xpiope.cloudfront.net/vehicles/", "").replace(".svg", ".png");
 
             //first we try getting the image from local saved images
@@ -69,7 +70,8 @@ public class SegmentsRecyclerAdapter extends RecyclerView.Adapter<SegmentsRecycl
                 holder.imageView_icon.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
                 holder.progressBar.setVisibility(View.GONE);
             } else {
-                //if we haven't saved the image previously, we try getting it from our cache system
+                //if we haven't saved the image previously, we try getting it from our cache system.
+                //If we fail, we download it from the URL provided
                 Bitmap image = imageCacheUtil.getImage(segment.getIconUrl());
 
                 if (image != null) {
@@ -80,7 +82,9 @@ public class SegmentsRecyclerAdapter extends RecyclerView.Adapter<SegmentsRecycl
                     new HttpImageRequestTask(context, holder.imageView_icon, holder.progressBar).execute(segment.getIconUrl());
                 }
             }
-
+        } else {
+            //sort of placeholder if the item doesn't have a image URL
+            holder.imageView_icon.setImageResource(R.mipmap.ic_launcher);
         }
     }
 
